@@ -13,7 +13,7 @@ const int interval = 20;          // interval at which send CAN Messages (millis
 const int rx_queue_size = 10;       // Receive Queue size
 bool btPrintCanRx = 0;
 bool btEnabled = 0;
-bool btH_Enabled = 0;
+bool btH_Enabled = 0; 
 bool CANBUS_Loss_Error = 0;
 bool CAN_Found = 0;
 bool NegateMotorSpeed;
