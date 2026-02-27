@@ -215,15 +215,15 @@ void loop() {
       {
         if((ubDeviceNumber == ubDeviceNumberToPrint) || (ubDeviceNumberToPrint == 99))
         {
-          printf("%lu\t0x%08X\t0x%02X\t0x%02X\t0x%02X\t0x%02X\t0x%02X\tDLC %d\t",
+          Serial.printf("%lu\t0x%08X\t0x%02X\t0x%02X\t0x%02X\t0x%02X\t0x%02X\tDLC %d\t",
                  micros(), id, ubDeviceType, ubManufacturer, 
                  ubAPIClass, ubAPIIndex, ubDeviceNumber, rx_frame.can_dlc);
           
           for (int i = 0; i < rx_frame.can_dlc; i++)
           {
-            printf("0x%02X\t", rx_frame.data[i]);
+            Serial.printf("0x%02X\t", rx_frame.data[i]);
           }
-          printf("\n");
+          Serial.printf("\n");
         }
       }
    
@@ -249,7 +249,7 @@ void loop() {
     {
       tx_frame.can_id = 0x000502C0 | CAN_EFF_FLAG;
       tx_frame.can_dlc = 1;
-      tx_frame.data[1] = 1;
+      tx_frame.data[0] = 1;
       mcp2515.sendMessage(&tx_frame);
     } 
   }
