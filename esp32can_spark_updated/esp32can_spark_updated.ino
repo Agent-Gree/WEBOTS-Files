@@ -241,6 +241,8 @@ void loop() {
       }
     }
   }
+///// Modify ^ to be able to read current, voltage, speed, and position ///////////////////
+//// Focus on position - will be used to align motors during walking
 
   // Send heartbeat every 20mS
   if((ul5mS % 20) == 0) 
