@@ -7,11 +7,11 @@
 MCP_CAN CAN(CS_PIN);
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(921600);
   SPI.begin(18, 19, 23, CS_PIN);
 
   Serial.print("Hi");
-  while (CAN_OK != CAN.begin(MCP_EXT, CAN_1000KBPS, MCP_8MHZ)) {
+  while (CAN_OK != CAN.begin(MCP_STDEXT, CAN_1000KBPS, MCP_8MHZ)) {
     Serial.println("CAN init failed, retrying...");
     delay(500);
   }
