@@ -23,8 +23,10 @@ void setup() {
 }
 
 void loop() {
-  byte data[8] = {1, 2, 3, 4, 5, 6, 7, 8};
-  CAN.sendMsgBuf(0x100, 0, 8, data);
+  //byte data[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+  //CAN.sendMsgBuf(0x100, 0, 8, data);
+  byte data[] = {0x48, 0x69};
+  CAN.sendMsgBuf(0x100, 0, 2, data);
   Serial.println("Message sent");
   delay(1000);
 }

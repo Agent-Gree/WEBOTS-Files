@@ -7,11 +7,11 @@
 MCP_CAN CAN(CS_PIN);
 
 void setup() {
-  Serial.begin(921600);
+  Serial.begin(115200);
   SPI.begin(18, 19, 23, CS_PIN);
 
   Serial.print("Hi");
-  while (CAN_OK != CAN.begin(MCP_STDEXT, CAN_1000KBPS, MCP_8MHZ)) {
+  while (CAN_OK != CAN.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ)) {
     Serial.println("CAN init failed, retrying...");
     delay(500);
   }
@@ -32,8 +32,13 @@ void loop() {
     Serial.print("ID: 0x");
     Serial.print(rxId, HEX);
     Serial.print("  Data: ");
+    //for (int i = 0; i < len; i++) {
+    //  Serial.print(rxBuf[i], HEX);
+    //  Serial.print(" ");
+    //}
+    
     for (int i = 0; i < len; i++) {
-      Serial.print(rxBuf[i], HEX);
+      Serial.print((char)rxBuf[i]);  // cast to char to print as text
       Serial.print(" ");
     }
     Serial.println();
