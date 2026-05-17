@@ -54,7 +54,7 @@ void loop() {
 // -----------------------------------------------------------------------------
 void request_motor_data(byte requestId) {
     byte data[1] = { requestId };
-    byte result = CAN.sendMsgBuf(MSG_MOTOR_REQUEST, 0, 1, data);
+    byte result = CAN.sendMsgBuf(MSG_MOTOR_REQUEST, 1, 1, data);
 
     if (result == CAN_OK) {
         Serial.printf("Request sent: 0x%02X\n", requestId);

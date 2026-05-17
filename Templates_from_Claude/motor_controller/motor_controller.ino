@@ -134,7 +134,7 @@ void send_motor_status() {
     data[BYTE_FLAGS]    = flags;
     data[BYTE_RESERVED] = 0;
 
-    byte result = CAN.sendMsgBuf(MSG_MOTOR_STATUS, 0, 8, data);
+    byte result = CAN.sendMsgBuf(MSG_MOTOR_STATUS, 1, 8, data);
 
     if (result == CAN_OK) {
         Serial.println("MotorStatus sent");
@@ -155,7 +155,7 @@ void send_current_only() {
     byte data[8] = {0};
     PACK_INT16(data, BYTE_CURRENT_HIGH, raw);
 
-    CAN.sendMsgBuf(MSG_MOTOR_STATUS, 0, 8, data);
+    CAN.sendMsgBuf(MSG_MOTOR_STATUS, 1, 8, data);
     Serial.printf("Current sent: %.2f A\n", current);
 }
 
@@ -169,7 +169,7 @@ void send_rpm_only() {
     byte data[8] = {0};
     PACK_INT16(data, BYTE_RPM_HIGH, raw);
 
-    CAN.sendMsgBuf(MSG_MOTOR_STATUS, 0, 8, data);
+    CAN.sendMsgBuf(MSG_MOTOR_STATUS, 1, 8, data);
     Serial.printf("RPM sent: %.0f RPM\n", rpm);
 }
 
@@ -183,6 +183,6 @@ void send_temperature_only() {
     byte data[8] = {0};
     PACK_UINT16(data, BYTE_TEMP_HIGH, raw);
 
-    CAN.sendMsgBuf(MSG_MOTOR_STATUS, 0, 8, data);
+    CAN.sendMsgBuf(MSG_MOTOR_STATUS, 1, 8, data);
     Serial.printf("Temperature sent: %.1f degC\n", temperature);
 }

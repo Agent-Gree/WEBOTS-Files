@@ -18,8 +18,13 @@
 // -----------------------------------------------------------------------------
 // Message IDs
 // -----------------------------------------------------------------------------
-#define MSG_MOTOR_REQUEST   0x100           // Master → Motor Controller
-#define MSG_MOTOR_STATUS    0x101           // Motor Controller → Master
+#define MSG_MOTOR_REQUEST   0x18FF0010           // Master → Motor Controller
+#define MSG_MOTOR_STATUS    0x18FF0101           // Motor Controller → Master
+
+
+// Format: 0x18FF [MessageType] [DeviceID]
+#define DEVICE_MOTOR_1      0x01
+#define DEVICE_MASTER       0x10
 
 // -----------------------------------------------------------------------------
 // Request IDs (sent in byte 0 of MSG_MOTOR_REQUEST)
