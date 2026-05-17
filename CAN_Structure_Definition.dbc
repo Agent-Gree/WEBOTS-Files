@@ -1,0 +1,18 @@
+VERSION ""
+
+NS_ :
+
+BS_:
+
+BU_:
+
+BO_ 257 MotorStatus: 8 ESP32_Motor
+ SG_ Current : 0|16@1- (0.01,0) [-327.68|327.67] "A" Vector__XXX
+ SG_ RPM : 16|16@1- (1,0) [-32768|32767] "RPM" Vector__XXX
+ SG_ Temperature : 32|16@1+ (0.1,0) [0|150] "degC" Vector__XXX
+ SG_ FaultFlag : 48|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ EnabledFlag : 49|1@1+ (1,0) [0|1] "" Vector__XXX
+
+BO_ 258 MotorCommand: 4 ESP32_Reader
+ SG_ TargetRPM : 0|16@1- (1,0) [-32768|32767] "RPM" Vector__XXX
+ SG_ Enable : 16|1@1+ (1,0) [0|1] "" Vector__XXX
