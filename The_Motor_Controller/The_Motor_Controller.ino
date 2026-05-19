@@ -11,7 +11,6 @@ bool motor_enabled = true;
 bool motor_fault   = false;
 
 
-
 void setup() {
     Serial.begin(115200);
     while (!Serial);
@@ -50,6 +49,11 @@ void loop() {
     }
   }
 }
+
+
+// ADD FUNCTIONS JAYLEN SENT
+// ADD ABILITY TO SET VALUES (LIKE THE POSITION, VOLTAGE, ETC) LIKE THE REV HARDWARE CLIENT CAN
+
 
 // -----------------------------------------------------------------------------
 // Route a request to the correct response function
