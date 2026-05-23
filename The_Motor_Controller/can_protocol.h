@@ -88,3 +88,28 @@
     ((uint16_t)(((uint16_t)(buf)[(idx)] << 8) | (buf)[(idx) + 1]))
 
 #endif // CAN_PROTOCOL_H
+
+// -----------------------------------------------------------------------------
+// PID Controller Stuff
+// -----------------------------------------------------------------------------
+// New message IDs
+#define MSG_PID_SET         0x102   // Master → Motor: write gains
+#define MSG_PID_REQUEST     0x103   // Master → Motor: ask for gains
+#define MSG_PID_STATUS      0x104   // Motor → Master: current gains
+
+// MSG_PID_SET and MSG_PID_STATUS share the same layout (8 bytes):
+//
+//  Byte 0-1 : Kp   int16   scale 0.001
+//  Byte 2-3 : Ki   int16   scale 0.001
+//  Byte 4-5 : Kd   int16   scale 0.001
+//  Byte 6   : Reserved
+//  Byte 7   : Reserved
+#define BYTE_KP_HIGH        0
+#define BYTE_KP_LOW         1
+#define BYTE_KI_HIGH        2
+#define BYTE_KI_LOW         3
+#define BYTE_KD_HIGH        4
+#define BYTE_KD_LOW         5
+
+#define SCALE_PID_GAIN      0.001f  // 3 decimal places, range ±32.767
+

@@ -53,7 +53,7 @@ void loop() {
 
 // ADD FUNCTIONS JAYLEN SENT
 // ADD ABILITY TO SET VALUES (LIKE THE POSITION, VOLTAGE, ETC) LIKE THE REV HARDWARE CLIENT CAN
-
+// FULLY UNDERSTAND HOW PID WORKS
 
 // -----------------------------------------------------------------------------
 // Route a request to the correct response function
@@ -103,6 +103,15 @@ float read_temperature()  {
   return 45.2f;  // placeholder
 }
 
+float read_position() {
+  // TODO: replace with encoder or hall sensor readings
+  return 35.3f;
+}
+
+float read_voltage()  {
+  // TODO: replace with some voltage readings
+  return 17.3f;
+}
 
 // -----------------------------------------------------------------------------
 // Send full MotorStatus frame (responds to REQ_ALL)
@@ -183,4 +192,5 @@ void send_temperature_only() {
     CAN.sendMsgBuf(MSG_MOTOR_STATUS, 1, 8, data);
     Serial.printf("Temperature sent: %.1f degC\n", temperature);
 }
+
 
