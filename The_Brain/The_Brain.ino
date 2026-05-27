@@ -111,3 +111,73 @@ void decode_motor_status(unsigned char *data, unsigned char len) {
     Serial.printf("  Fault:       %s\n", fault   ? "YES" : "NO");
     Serial.println("--------------------");
 }
+
+// -----------------------------------------------------------------------------
+// Setting the PID gain constants
+// -----------------------------------------------------------------------------
+void set_pid_gains(float Kp, float Ki, float Kd) {
+    byte data[8] = {0};
+    PACK_INT16(data, BYTE_KP_HIGH, (int16_t)(Kp / SCALE_PID_GAIN));
+    PACK_INT16(data, BYTE_KI_HIGH, (int16_t)(Ki / SCALE_PID_GAIN));
+    PACK_INT16(data, BYTE_KD_HIGH, (int16_t)(Kd / SCALE_PID_GAIN));
+    CAN.sendMsgBuf(MSG_PID_SET, 1, 8, data);
+}
+
+// -----------------------------------------------------------------------------
+// Requesting the value of the PID gain constants
+// -----------------------------------------------------------------------------
+void request_pid_gains() {
+    byte data[1] = {0};
+    CAN.sendMsgBuf(MSG_PID_REQUEST, 1, 1, data);
+}
+
+
+
+// -----------------------------------------------------------
+// Send a target RPM
+// -----------------------------------------------------------
+void set_target_rpm(float rpm) {
+    byte data[8] = {0};
+    data[BYTE_SETPOINT_MODE] = SETPOINT_RPM;
+    PACK_INT32(data, BYTE_SETPOINT_VAL, (int32_t)rpm);
+    CAN.sendMsgBuf(MSG_SETPOINT, 1, 8, data);
+    Serial.printf("Setpoint sent: %.0f RPM\n", rpm);
+}
+
+// -----------------------------------------------------------
+// Send a target position
+// -----------------------------------------------------------
+void set_target_position(int32_t counts) {
+    byte data[8] = {0};
+    data[BYTE_SETPOINT_MODE] = SETPOINT_POSITION;
+    PACK_INT32(data, BYTE_SETPOINT_VAL, counts);
+    CAN.sendMsgBuf(MSG_SETPOINT, 1, 8, data);
+    Serial.printf("Setpoint sent: %ld counts\n", counts);
+}
+
+// -----------------------------------------------------------
+// Send home command
+// -----------------------------------------------------------
+void send_home() {
+    byte data[1] = {0};
+    CAN.sendMsgBuf(MSG_HOME, 1, 1, data);
+    Serial.println("Home command sent");
+}
+
+// -----------------------------------------------------------
+// Decode telemetry frame
+// -----------------------------------------------------------
+void decode_motor_telemetry(unsigned char *data, unsigned char len) {
+    if (len < 6) {
+        Serial.println("Telemetry frame too short");
+        return;
+    }
+
+    uint16_t raw_voltage = UNPACK_UINT16(data, BYTE_VOLTAGE_HIGH);
+    int32_t  position    = UNPACK_INT32 (data, BYTE_POSITION_3);
+
+    float voltage = raw_voltage * SCALE_VOLTAGE;
+
+    Serial.printf("Voltage: %.2fV  Position: %ld counts\n",
+                  voltage, position);
+}

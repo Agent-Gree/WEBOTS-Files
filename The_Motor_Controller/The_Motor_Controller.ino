@@ -9,6 +9,7 @@ MCP_CAN CAN(CAN_CS_PIN);
 // -----------------------------------------------------------------------------
 bool motor_enabled = true;
 bool motor_fault   = false;
+PID motor_pid = {0};  // global PID instance
 
 
 void setup() {
@@ -51,9 +52,6 @@ void loop() {
 }
 
 
-// ADD FUNCTIONS JAYLEN SENT
-// ADD ABILITY TO SET VALUES (LIKE THE POSITION, VOLTAGE, ETC) LIKE THE REV HARDWARE CLIENT CAN
-// FULLY UNDERSTAND HOW PID WORKS
 
 // -----------------------------------------------------------------------------
 // Route a request to the correct response function
@@ -77,6 +75,14 @@ void handle_request(byte requestId) {
     case REQ_ALL:
       send_motor_status();
       break;
+
+    case MSG_PID_SET:
+        handle_pid_set(rxBuf);
+        break;
+
+    case MSG_PID_REQUEST:
+        send_pid_status();
+        break;
 
     default:
       Serial.printf("Unknown request ID: 0x%02X\n", requestId);
@@ -194,3 +200,164 @@ void send_temperature_only() {
 }
 
 
+// -----------------------------------------------------------------------------
+// PID struct, functions, and logic
+// -----------------------------------------------------------------------------
+typedef struct {
+    float Kp, Ki, Kd;      // gains — set via CAN
+    float setpoint;         // target RPM — set via CAN
+    float integral;         // accumulated error — internal
+    float prev_error;       // last error — internal
+    unsigned long last_time; // for dt calculation
+} PID;
+
+float pid_compute(PID *pid, float actual) {
+    unsigned long now = micros();
+    float dt = (now - pid->last_time) / 1000000.0f;  // seconds
+    pid->last_time = now;
+
+    if (dt <= 0) return 0;  // guard against zero dt
+
+    float error      = pid->setpoint - actual;
+    pid->integral   += error * dt;
+    float derivative = (error - pid->prev_error) / dt;
+    pid->prev_error  = error;
+
+    return (pid->Kp * error)
+         + (pid->Ki * pid->integral)
+         + (pid->Kd * derivative);
+}
+
+
+// -----------------------------------------------------------------------------
+// Reading PID gains constants
+// -----------------------------------------------------------------------------
+void handle_pid_set(unsigned char *data) {
+    int16_t raw_kp = UNPACK_INT16(data, BYTE_KP_HIGH);
+    int16_t raw_ki = UNPACK_INT16(data, BYTE_KI_HIGH);
+    int16_t raw_kd = UNPACK_INT16(data, BYTE_KD_HIGH);
+
+    motor_pid.Kp = raw_kp * SCALE_PID_GAIN;
+    motor_pid.Ki = raw_ki * SCALE_PID_GAIN;
+    motor_pid.Kd = raw_kd * SCALE_PID_GAIN;
+
+    // Reset integral and derivative state when gains change
+    // otherwise the old accumulated values corrupt the new gains
+    motor_pid.integral   = 0;
+    motor_pid.prev_error = 0;
+
+    Serial.printf("PID updated — Kp:%.3f Ki:%.3f Kd:%.3f\n",
+                  motor_pid.Kp, motor_pid.Ki, motor_pid.Kd);
+}
+
+
+// -----------------------------------------------------------------------------
+// Sending the PID gain constants
+// -----------------------------------------------------------------------------
+void send_pid_status() {
+    byte data[8] = {0};
+    PACK_INT16(data, BYTE_KP_HIGH, (int16_t)(motor_pid.Kp / SCALE_PID_GAIN));
+    PACK_INT16(data, BYTE_KI_HIGH, (int16_t)(motor_pid.Ki / SCALE_PID_GAIN));
+    PACK_INT16(data, BYTE_KD_HIGH, (int16_t)(motor_pid.Kd / SCALE_PID_GAIN));
+    CAN.sendMsgBuf(MSG_PID_STATUS, 1, 8, data);
+}
+
+
+
+// Two PID loops — one for each control mode
+PID rpm_pid      = {0};
+PID position_pid = {0};
+byte control_mode = SETPOINT_RPM;  // default mode
+
+// Current setpoints
+float    target_rpm      = 0;
+int32_t  target_position = 0;
+
+// -----------------------------------------------------------
+// Receive and apply a setpoint from master
+// -----------------------------------------------------------
+void handle_setpoint(unsigned char *data) {
+    byte mode       = data[BYTE_SETPOINT_MODE];
+    int32_t value   = UNPACK_INT32(data, BYTE_SETPOINT_VAL);
+
+    control_mode = mode;
+
+    switch (mode) {
+        case SETPOINT_RPM:
+            target_rpm = (float)value;
+            rpm_pid.setpoint = target_rpm;
+
+            // Reset position PID state — no longer active
+            position_pid.integral   = 0;
+            position_pid.prev_error = 0;
+
+            Serial.printf("Mode: RPM  Target: %.0f RPM\n", target_rpm);
+            break;
+
+        case SETPOINT_POSITION:
+            target_position = value;
+            position_pid.setpoint = (float)target_position;
+
+            // Reset RPM PID state
+            rpm_pid.integral   = 0;
+            rpm_pid.prev_error = 0;
+
+            Serial.printf("Mode: Position  Target: %ld counts\n", target_position);
+            break;
+
+        default:
+            Serial.printf("Unknown setpoint mode: 0x%02X\n", mode);
+            break;
+    }
+}
+
+// -----------------------------------------------------------
+// Handle home command — resets internal position counter
+// -----------------------------------------------------------
+void handle_home() {
+    encoder_count    = 0;      // reset your encoder variable to zero
+    position_pid.integral   = 0;
+    position_pid.prev_error = 0;
+    Serial.println("Homed — position reset to 0");
+}
+
+// -----------------------------------------------------------
+// Send telemetry (voltage + position)
+// -----------------------------------------------------------
+void send_motor_telemetry() {
+    float   voltage  = read_voltage();
+    int32_t position = encoder_count;
+
+    uint16_t raw_voltage = (uint16_t)(voltage / SCALE_VOLTAGE);
+
+    byte data[8] = {0};
+    PACK_UINT16(data, BYTE_VOLTAGE_HIGH, raw_voltage);
+    PACK_INT32 (data, BYTE_POSITION_3,   position);
+
+    CAN.sendMsgBuf(MSG_MOTOR_TELEMETRY, 1, 8, data);
+}
+
+// -----------------------------------------------------------
+// Control loop — call this as fast as possible in loop()
+// -----------------------------------------------------------
+void run_control_loop() {
+    float actual_rpm      = read_rpm();
+    int32_t actual_pos    = encoder_count;
+    float output          = 0;
+
+    switch (control_mode) {
+        case SETPOINT_RPM:
+            output = pid_compute(&rpm_pid, actual_rpm);
+            break;
+
+        case SETPOINT_POSITION:
+            output = pid_compute(&position_pid, (float)actual_pos);
+            break;
+    }
+
+    // Clamp output to valid PWM range
+    output = constrain(output, -255, 255);
+
+    // TODO: apply output to your motor driver
+    // e.g. analogWrite(MOTOR_PWM_PIN, (int)output);
+}
