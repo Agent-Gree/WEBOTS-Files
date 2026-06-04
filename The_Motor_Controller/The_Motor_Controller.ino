@@ -9,7 +9,18 @@ MCP_CAN CAN(CAN_CS_PIN);
 // -----------------------------------------------------------------------------
 bool motor_enabled = true;
 bool motor_fault   = false;
+
+// PID struct
+typedef struct {
+    float Kp, Ki, Kd;      // gains — set via CAN
+    float setpoint;         // target RPM — set via CAN
+    float integral;         // accumulated error — internal
+    float prev_error;       // last error — internal
+    unsigned long last_time; // for dt calculation
+} PID;
 PID motor_pid = {0};  // global PID instance
+
+int encoder_count = 0; // global encoder counter     
 
 
 void setup() {
@@ -33,17 +44,26 @@ void setup() {
 // Main loop — listen for requests and respond
 // -----------------------------------------------------------------------------
 void loop() {
-  if (CAN_MSGAVAIL == Can.checkReceive()) {
+  if (CAN_MSGAVAIL == CAN.checkReceive()) {
     long unsigned int rxId;
     unsigned char rxLen;
     unsigned char rxBuf[8];
 
-    Can.readMsgBuf(&rxId, &rxLen, rxBuf);
+    CAN.readMsgBuf(&rxId, &rxLen, rxBuf);
 
     switch (rxId) {
       case MSG_MOTOR_REQUEST:
         handle_request(rxBuf[0]);
         break;
+
+      case MSG_PID_SET:
+        handle_pid_set(rxBuf);
+        break;
+
+      case MSG_PID_REQUEST:
+        send_pid_status();
+        break;
+
       default:
         // Ignore unknown messages
         break;
@@ -56,10 +76,10 @@ void loop() {
 // -----------------------------------------------------------------------------
 // Route a request to the correct response function
 // -----------------------------------------------------------------------------
-void handle_request(byte requestId) {
-  Serial.printf("Request recieved: 0x%02X\n", requestId);
+void handle_request(byte requestID) {
+  Serial.printf("Request recieved: 0x%02X\n", requestID);
 
-  switch (requestId) {
+  switch (requestID) {
     case REQ_CURRENT:
       send_current_only();
       break;
@@ -76,16 +96,8 @@ void handle_request(byte requestId) {
       send_motor_status();
       break;
 
-    case MSG_PID_SET:
-        handle_pid_set(rxBuf);
-        break;
-
-    case MSG_PID_REQUEST:
-        send_pid_status();
-        break;
-
     default:
-      Serial.printf("Unknown request ID: 0x%02X\n", requestId);
+      Serial.printf("Unknown request ID: 0x%02X\n", requestID);
       break;
   }
 }
@@ -203,14 +215,6 @@ void send_temperature_only() {
 // -----------------------------------------------------------------------------
 // PID struct, functions, and logic
 // -----------------------------------------------------------------------------
-typedef struct {
-    float Kp, Ki, Kd;      // gains — set via CAN
-    float setpoint;         // target RPM — set via CAN
-    float integral;         // accumulated error — internal
-    float prev_error;       // last error — internal
-    unsigned long last_time; // for dt calculation
-} PID;
-
 float pid_compute(PID *pid, float actual) {
     unsigned long now = micros();
     float dt = (now - pid->last_time) / 1000000.0f;  // seconds

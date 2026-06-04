@@ -37,7 +37,7 @@ void loop() {
   }
   
   // Check for incoming messages
-  if (CAN_MSGAVAIL == Can.checkReceive()) {
+  if (CAN_MSGAVAIL == CAN.checkReceive()) {
     receive_and_decode();
   }
 }
@@ -51,7 +51,7 @@ void request_motor_data(byte requestID) {
     byte result = CAN.sendMsgBuf(MSG_MOTOR_REQUEST, 1, 1, data);
 
   if (result == CAN_OK) {
-        Serial.printf("Request sent: 0x%02X\n", requestId);
+        Serial.printf("Request sent: 0x%02X\n", requestID);
     } else {
         Serial.println("Request send FAILED");
     }
