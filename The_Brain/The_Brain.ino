@@ -25,22 +25,6 @@ void setup() {
     Serial.println("Master ready.");
 }
 
-// -----------------------------------------------------------------------------
-// Main loop — request all motor values every second, handle any responses
-// -----------------------------------------------------------------------------
-void loop() {
-  // Send a request evvery 1000ms
-  static unsigned long lastRequest = 0; 
-  if (millis() - lastRequest >= 1000) {
-    request_motor_data(REQ_ALL);
-    lastRequest = millis();
-  }
-  
-  // Check for incoming messages
-  if (CAN_MSGAVAIL == CAN.checkReceive()) {
-    receive_and_decode();
-  }
-}
 
 // -----------------------------------------------------------------------------
 // Send a request to the motor controller
@@ -181,3 +165,22 @@ void decode_motor_telemetry(unsigned char *data, unsigned char len) {
     Serial.printf("Voltage: %.2fV  Position: %ld counts\n",
                   voltage, position);
 }
+
+
+// -----------------------------------------------------------------------------
+// Main loop — request all motor values every second, handle any responses
+// -----------------------------------------------------------------------------
+void loop() {
+  // Send a request evvery 1000ms
+  static unsigned long lastRequest = 0; 
+  if (millis() - lastRequest >= 1000) {
+    request_motor_data(REQ_ALL);
+    lastRequest = millis();
+  }
+  
+  // Check for incoming messages
+  if (CAN_MSGAVAIL == CAN.checkReceive()) {
+    receive_and_decode();
+  }
+}
+

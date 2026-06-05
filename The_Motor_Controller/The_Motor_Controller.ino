@@ -20,7 +20,7 @@ typedef struct {
 } PID;
 PID motor_pid = {0};  // global PID instance
 
-int encoder_count = 0; // global encoder counter     
+int32_t encoder_count = 0; // global encoder counter     
 
 
 void setup() {
@@ -41,42 +41,9 @@ void setup() {
 }
 
 // -----------------------------------------------------------------------------
-// Main loop — listen for requests and respond
-// -----------------------------------------------------------------------------
-void loop() {
-  if (CAN_MSGAVAIL == CAN.checkReceive()) {
-    long unsigned int rxId;
-    unsigned char rxLen;
-    unsigned char rxBuf[8];
-
-    CAN.readMsgBuf(&rxId, &rxLen, rxBuf);
-
-    switch (rxId) {
-      case MSG_MOTOR_REQUEST:
-        handle_request(rxBuf[0]);
-        break;
-
-      case MSG_PID_SET:
-        handle_pid_set(rxBuf);
-        break;
-
-      case MSG_PID_REQUEST:
-        send_pid_status();
-        break;
-
-      default:
-        // Ignore unknown messages
-        break;
-    }
-  }
-}
-
-
-
-// -----------------------------------------------------------------------------
 // Route a request to the correct response function
 // -----------------------------------------------------------------------------
-void handle_request(byte requestID) {
+void handle_request(byte requestID, unsigned char *data) {
   Serial.printf("Request recieved: 0x%02X\n", requestID);
 
   switch (requestID) {
@@ -365,3 +332,49 @@ void run_control_loop() {
     // TODO: apply output to your motor driver
     // e.g. analogWrite(MOTOR_PWM_PIN, (int)output);
 }
+
+
+
+// -----------------------------------------------------------------------------
+// Main loop — listen for requests and respond
+// -----------------------------------------------------------------------------
+void loop() {
+  
+  run_control_loop();
+  
+  if (CAN_MSGAVAIL == CAN.checkReceive()) {
+    long unsigned int rxId;
+    unsigned char rxLen;
+    unsigned char rxBuf[8];
+
+    CAN.readMsgBuf(&rxId, &rxLen, rxBuf);
+
+    switch (rxId) {
+      case MSG_MOTOR_REQUEST:
+        handle_request(rxBuf[0], rxBuf);
+        break;
+
+      case MSG_SETPOINT:
+          handle_setpoint(rxBuf);
+          break;
+
+      case MSG_HOME:
+          handle_home();
+          break;
+
+      case MSG_PID_SET:
+        handle_pid_set(rxBuf);
+        break;
+
+      case MSG_PID_REQUEST:
+        send_pid_status();
+        break;
+
+      default:
+        // Ignore unknown messages
+        break;
+    }
+  }
+}
+
+
