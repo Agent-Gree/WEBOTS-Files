@@ -45,21 +45,25 @@ void request_motor_data(byte requestID) {
 // Receive an incoming CAN frame and route to the correct decoder
 // -----------------------------------------------------------------------------
 void receive_and_decode() {
-  long unsigned int rxId;
-  unsigned char rxLen;
-  unsigned char rxBuf[8];
+    long unsigned int rxId;
+    unsigned char rxLen;
+    unsigned char rxBuf[8];
 
-  CAN.readMsgBuf(&rxId, &rxLen, rxBuf);
+    CAN.readMsgBuf(&rxId, &rxLen, rxBuf);
 
-  switch (rxId) {
-    case MSG_MOTOR_STATUS:
-      decode_motor_status(rxBuf, rxLen);
-      break;
-    
-    default:
-      Serial.printf("Unknown message ID: 0x%03lX\n", rxId);
-      break;
-  }
+
+    // Strip the extended frame flag bit before routing (so it doesn't read the extended flag)
+    rxId &= 0x1FFFFFFF;
+
+    switch (rxId) {
+        case MSG_MOTOR_STATUS:
+        decode_motor_status(rxBuf, rxLen);
+        break;
+        
+        default:
+        Serial.printf("Unknown message ID: 0x%03lX\n", rxId);
+        break;
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -171,16 +175,22 @@ void decode_motor_telemetry(unsigned char *data, unsigned char len) {
 // Main loop — request all motor values every second, handle any responses
 // -----------------------------------------------------------------------------
 void loop() {
-  // Send a request evvery 1000ms
-  static unsigned long lastRequest = 0; 
-  if (millis() - lastRequest >= 1000) {
-    request_motor_data(REQ_ALL);
-    lastRequest = millis();
-  }
-  
-  // Check for incoming messages
-  if (CAN_MSGAVAIL == CAN.checkReceive()) {
-    receive_and_decode();
-  }
+    // Send a request evvery 1000ms
+    static unsigned long lastRequest = 0; 
+    if (millis() - lastRequest >= 1000) {
+        request_motor_data(REQ_ALL);
+        lastRequest = millis();
+    }
+    
+    // Check for incoming messages
+    if (CAN_MSGAVAIL == CAN.checkReceive()) {
+        receive_and_decode();
+    }
+
+    // Add temporarily to loop() to catch MCP2515 errors
+    byte error = CAN.getError();
+    if (error) {
+        Serial.printf("CAN error register: 0x%02X\n", error);
+    }
 }
 

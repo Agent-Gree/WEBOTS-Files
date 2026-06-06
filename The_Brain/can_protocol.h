@@ -20,9 +20,9 @@
 // -----------------------------------------------------------------------------
 #define MSG_MOTOR_REQUEST   0x18FF0010           // Master → Motor Controller
 #define MSG_MOTOR_STATUS    0x18FF0101           // Motor Controller → Master
-#define MSG_MOTOR_TELEMETRY 0x102   // Motor → Master: voltage, position
-#define MSG_SETPOINT        0x105   // Master → Motor: target value + mode
-#define MSG_HOME            0x106   // Master → Motor: reset position
+#define MSG_MOTOR_TELEMETRY 0x18FF0102   // Motor → Master: voltage, position
+#define MSG_SETPOINT        0x18FF0106   // Master → Motor: target value + mode
+#define MSG_HOME            0x18FF0107   // Master → Motor: reset position
 
 // Format: 0x18FF [MessageType] [DeviceID]
 #define DEVICE_MOTOR_1      0x01
@@ -138,9 +138,9 @@
 // PID Controller Stuff
 // -----------------------------------------------------------------------------
 // New message IDs
-#define MSG_PID_SET         0x102   // Master → Motor: write gains
-#define MSG_PID_REQUEST     0x103   // Master → Motor: ask for gains
-#define MSG_PID_STATUS      0x104   // Motor → Master: current gains
+#define MSG_PID_SET         0x18FF0103   // Master → Motor: write gains
+#define MSG_PID_REQUEST     0x18FF0104   // Master → Motor: ask for gains
+#define MSG_PID_STATUS      0x18FF0105   // Motor → Master: current gains
 
 // MSG_PID_SET and MSG_PID_STATUS share the same layout (8 bytes):
 //

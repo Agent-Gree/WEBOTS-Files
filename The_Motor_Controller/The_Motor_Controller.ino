@@ -349,18 +349,23 @@ void loop() {
 
     CAN.readMsgBuf(&rxId, &rxLen, rxBuf);
 
+    // Strip the extended frame flag bit before routing (so it reads 0x18FF0010 as the ID instead of 0x98FF0010)
+    rxId &= 0x1FFFFFFF;
+
+    Serial.printf("Raw frame received — ID: 0x%03lX  Len: %d\n", rxId, rxLen);
+
     switch (rxId) {
       case MSG_MOTOR_REQUEST:
         handle_request(rxBuf[0], rxBuf);
         break;
 
       case MSG_SETPOINT:
-          handle_setpoint(rxBuf);
-          break;
+        handle_setpoint(rxBuf);
+        break;
 
       case MSG_HOME:
-          handle_home();
-          break;
+        handle_home();
+        break;
 
       case MSG_PID_SET:
         handle_pid_set(rxBuf);
@@ -374,6 +379,12 @@ void loop() {
         // Ignore unknown messages
         break;
     }
+  }
+
+  // Add temporarily to loop() to catch MCP2515 errors
+  byte error = CAN.getError();
+  if (error) {
+      Serial.printf("CAN error register: 0x%02X\n", error);
   }
 }
 
