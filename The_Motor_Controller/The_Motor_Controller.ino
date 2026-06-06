@@ -20,7 +20,7 @@ typedef struct {
 } PID;
 PID motor_pid = {0};  // global PID instance
 
-int32_t encoder_count = 0; // global encoder counter     
+int32_t encoder_count = 0; // global encoder counter (read value from encoder on motor)   -> encoder_count = esp32.readencoder()  
 
 
 void setup() {
@@ -90,7 +90,7 @@ float read_temperature()  {
 
 float read_position() {
   // TODO: replace with encoder or hall sensor readings
-  return 35.3f;
+  return encoder_count;
 }
 
 float read_voltage()  {
@@ -286,7 +286,7 @@ void handle_setpoint(unsigned char *data) {
 // Handle home command — resets internal position counter
 // -----------------------------------------------------------
 void handle_home() {
-    encoder_count    = 0;      // reset your encoder variable to zero
+    encoder_count    = 0;      // reset your encoder variable to zero (how will this work????)
     position_pid.integral   = 0;
     position_pid.prev_error = 0;
     Serial.println("Homed — position reset to 0");
@@ -297,7 +297,7 @@ void handle_home() {
 // -----------------------------------------------------------
 void send_motor_telemetry() {
     float   voltage  = read_voltage();
-    int32_t position = encoder_count;
+    int32_t position = read_position();
 
     uint16_t raw_voltage = (uint16_t)(voltage / SCALE_VOLTAGE);
 
@@ -305,7 +305,14 @@ void send_motor_telemetry() {
     PACK_UINT16(data, BYTE_VOLTAGE_HIGH, raw_voltage);
     PACK_INT32 (data, BYTE_POSITION_3,   position);
 
-    CAN.sendMsgBuf(MSG_MOTOR_TELEMETRY, 1, 8, data);
+    byte result = CAN.sendMsgBuf(MSG_MOTOR_TELEMETRY, 1, 8, data);
+      
+    if (result == CAN_OK) {
+      Serial.println("MotorTelemetry sent");
+    } else {
+      Serial.println("MotorTelemetry send FAILED");
+    }
+
 }
 
 // -----------------------------------------------------------
@@ -313,7 +320,7 @@ void send_motor_telemetry() {
 // -----------------------------------------------------------
 void run_control_loop() {
     float actual_rpm      = read_rpm();
-    int32_t actual_pos    = encoder_count;
+    int32_t actual_pos    = read_position();
     float output          = 0;
 
     switch (control_mode) {
@@ -357,6 +364,10 @@ void loop() {
     switch (rxId) {
       case MSG_MOTOR_REQUEST:
         handle_request(rxBuf[0], rxBuf);
+        break;
+
+      case MSG_MOTOR_TELEMETRY:
+        send_motor_telemetry();
         break;
 
       case MSG_SETPOINT:

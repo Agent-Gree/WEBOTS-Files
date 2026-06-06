@@ -34,11 +34,18 @@ void request_motor_data(byte requestID) {
     byte data[1] = {requestID};
     byte result = CAN.sendMsgBuf(MSG_MOTOR_REQUEST, 1, 1, data);
 
-  if (result == CAN_OK) {
+    if (result == CAN_OK) {
         Serial.printf("Request sent: 0x%02X\n", requestID);
     } else {
         Serial.println("Request send FAILED");
     }
+}
+
+
+void request_motor_telemetry(){
+    byte data[1] = {0};
+    byte result = CAN.sendMsgBuf(MSG_MOTOR_TELEMETRY, 1, 1, data);
+
 }
 
 // -----------------------------------------------------------------------------
@@ -57,12 +64,16 @@ void receive_and_decode() {
 
     switch (rxId) {
         case MSG_MOTOR_STATUS:
-        decode_motor_status(rxBuf, rxLen);
-        break;
+            decode_motor_status(rxBuf, rxLen);
+            break;
         
+        case MSG_MOTOR_TELEMETRY:
+            decode_motor_telemetry(rxBuf, rxLen);
+            break;
+
         default:
-        Serial.printf("Unknown message ID: 0x%03lX\n", rxId);
-        break;
+            Serial.printf("Unknown message ID: 0x%03lX\n", rxId);
+            break;
     }
 }
 
@@ -178,7 +189,7 @@ void loop() {
     // Send a request evvery 1000ms
     static unsigned long lastRequest = 0; 
     if (millis() - lastRequest >= 1000) {
-        request_motor_data(REQ_ALL);
+        set_target_position(1500);
         lastRequest = millis();
     }
     
