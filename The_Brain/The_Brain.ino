@@ -189,7 +189,7 @@ void loop() {
     // Send a request evvery 1000ms
     static unsigned long lastRequest = 0; 
     if (millis() - lastRequest >= 1000) {
-        set_target_position(1500);
+        request_motor_data(REQ_ALL);
         lastRequest = millis();
     }
     
