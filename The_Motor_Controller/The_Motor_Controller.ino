@@ -1,3 +1,9 @@
+// -----------------------------------------------------------------------------
+// TO DO: 
+// Figure out how to send CAN frame in the same way as FRC. 
+// Search up car CAN buses and how they do it. 
+// -----------------------------------------------------------------------------
+
 #include <SPI.h>
 #include <mcp_can.h>
 #include "can_protocol.h"
