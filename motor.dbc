@@ -24,11 +24,20 @@ BU_:
 
 BO_ 257 MotorStatus: 8 ESP32_Motor
  SG_ Current : 0|16@1- (0.01,0) [-327.68|327.67] "A" Vector__XXX
- SG_ RPM : 16|16@1- (1,0) [-32768|32767] "RPM" Vector__XXX
+ SG_ RPM : 16|16@1- (1,0) [-32768|32767] "RPM" Vector__XXX  ** Needs to be divided by 360 deg and 60 sec
  SG_ Temperature : 32|16@1+ (0.1,0) [0|150] "degC" Vector__XXX
- SG_ FaultFlag : 48|1@1+ (1,0) [0|1] "" Vector__XXX
- SG_ EnabledFlag : 49|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ Position: 48|16@1- (1,0) [-360|360] "deg" Vector__XXX *** Needs to be divided by gear ratio for real output
+ SG_ FaultFlag : 54|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ EnabledFlag : 55|1@1+ (1,0) [0|1] "" Vector__XXX
 
 BO_ 258 MotorCommand: 4 ESP32_Reader
  SG_ TargetRPM : 0|16@1- (1,0) [-32768|32767] "RPM" Vector__XXX
  SG_ Enable : 16|1@1+ (1,0) [0|1] "" Vector__XXX
+
+Bo_ 259 
+
+voltage, current, position, speed, some temperatures, maybe pid values, some fault codes
+the motor drivers will send 4 temperatures each at 16bit, bus current & voltage at 16bit. these values should be scaled down a lot since we dont need the resolution
+this will be at 2hz for now
+they will also send positional data at 14bit and 1000hz
+the jetson will send positional data at lets assume 14bit for now at 100hz
