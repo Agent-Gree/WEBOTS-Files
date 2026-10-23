@@ -1,0 +1,16 @@
+Packing data
+1 - cast the value (val) to an unsigned 16-bit (2-byte) integer
+2 - break it into 2 8-bit (1-byte) parts (0000 0010 1101 0111 becomes 0000 0010 and 1101 0111) - shift the original number right by 8 and & 0XFF (MSB), then & the original number (LSB)
+3 - put the first part (High Byte, or MSB) in the location in the buffer specified by "idx"  - remember that we are following Big Endian and that the buffer is a byte array (so each index has 8 bits of space!
+4 - put the 2nd part (Low Byte, LSB) in (idx + 1), as the value gets 2 bytes of space in the buffer (see header file for byte positions)
+5 -now the buffer is packed. Since we used pointers, we can just call this macro without having to assign it to variable.
+
+Unpacking Data
+1 - cast the MSB (idx) in the buffer to an unsigned 16-bit integer
+2 - cast the LSB (idx + 1) in the buffer to an unsigned 16-bit integer
+3 - bitwise OR (|) them to get the original binary number
+4 - cast to a signed 16-bit integer if necessary
+5 - this returns an integer that is to be treated as either signed or unsigned
+6 - in the code, the output of the unpacking macros are assigned to variables that are defined as signed or unsigned (corresponing to the output). This is for redundancy to ensure that the value is treated as a signed or unsigned number, correspondingly
+
+Note: When printing out a number (i.e., %d), the number is decimal, binary, hexadecimal, etc all at once! The operator (%d) just tells the compiler what format to display it in
