@@ -1,6 +1,8 @@
+// necessary headers
 #include <stdio.h>
 #include <stdint.h>
 
+// this function manally prints out the binary number (the Windows C runtime can't natively print binary numbers with the printf() function)
 void print_binary(uint32_t n, int shift){
     // multiple by 8 because uint32_t is BYTE type, so sizeof() returns 4 as 32 bits = 4 bytes
     for (int i = sizeof(n)*8 - 1; i >= 0; i--){
@@ -10,19 +12,25 @@ void print_binary(uint32_t n, int shift){
     printf("\n");
     //printf("Size of n: %d\n", (int)(sizeof(n)*8));
 }
+
+// combining two binary numbers
 uint32_t combine(uint32_t x, uint32_t y){
     uint32_t comb = x | (y << 8);
     return comb; 
 }
 
+// extracting (masking) the original number after combining it with another number
 uint32_t get_x(uint32_t comb){
     return comb & 0X000000FF;
 }
 
+// extracting (masking) the original number after combining it with another number
 uint32_t get_y(uint32_t comb){
-    return comb & 0X0000FF00;
+    // shifted extraction back down to position 0 because y and y_mask start at bit 8
+    return (comb & 0X0000FF00) >> 8;
 }
 
+// demo
 int main(){
     uint32_t x = 21;
     uint32_t y = 17;
