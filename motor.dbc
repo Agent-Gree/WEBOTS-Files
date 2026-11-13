@@ -29,17 +29,18 @@ BO_ 257 MSG_MOTOR_STATUS: 8 Motor_Controller
  SG_ FaultFlag : 54|1@1+ (1,0) [0|1] "" Vector__XXX
  SG_ EnabledFlag : 55|1@1+ (1,0) [0|1] "" Vector__XXX
 
-BO_ 258 MSG_MOTOR_REQUEST: 4 Brain
- SG_ RequestID: 0|1@1+ (1,0) [0|1] "" Vector__XXX
 
 BO_259 MSG_MOTOR_TELEMETRY: 8 Motor_Controller
- SG_ Position : 48|16@1- (1,0) [-360|360] "deg" Vector__XXX *** Output: degree of motor itself. Needs to be divided by gear ratio of gear box for real output. 
+ SG_ Position : 0|16@1- (1,0) [-360|360] "deg" Vector__XXX *** Output: degree of motor itself. Needs to be divided by gear ratio of gear box for real output. 
+ SG_ FaultFlag : 54|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ EnabledFlag : 55|1@1+ (1,0) [0|1] "" Vector__XXX
 
++++++ NEXT STEPS++++
+---- Encoders will give position in degrees (Jaylen will write code on drivers to do conversions), so don't worry about having a scaling !--------------
+---- Figure out how to send motor position at 1000hz - it may be faster than Arduino loop() 
+---- Figure out how The Brain can send desired position whenever
+---- Ask Jaylen if we should keep the position bound to 360 degrees (if a value is > 360, subtract 360 from it)
 
-- no PID anything!
-- no having to request stuff (just spit everything out!) ---------------------------------------------
-
-**Don't send RPM. Have a function get "Position" and convert to RPM
 voltage, current, position, speed, some temperatures, some fault codes
 the motor drivers will send 4 temperatures each at 16bit, bus current & voltage at 16bit. these values should be scaled down a lot since we dont need the resolution
 this will be at 2hz for now

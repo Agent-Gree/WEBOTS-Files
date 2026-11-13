@@ -1,0 +1,14 @@
+#################### NOTES ####################
+
++++++ NEXT STEPS++++
+---- Encoders will give position in degrees (Jaylen will write code on drivers to do conversions), so don't worry about having a scaling !--------------
+---- Figure out how to send motor position at 1000hz - it may be faster than Arduino loop() 
+---- Figure out how The Brain can send desired position whenever
+---- Ask Jaylen if we should keep the position bound to 360 degrees (if a value is > 360, subtract 360 from it)
+
+_____ SIDE NOTES ____
+voltage, current, position, speed, some temperatures, some fault codes
+the motor drivers will send 4 temperatures each at 16bit, bus current & voltage at 16bit. these values should be scaled down a lot since we dont need the resolution
+this will be at 2hz for now
+they will also send positional data at 14bit and 1000hz
+the jetson will send positional data at lets assume 14bit for now at 100hz
